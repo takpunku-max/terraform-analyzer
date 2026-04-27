@@ -16,7 +16,7 @@ class AnalyzerRequest(BaseModel):
     terraform_code:str
 
 
-@app.post("/analyzer")
+@app.post("/analyze")
 def analyzer (request: AnalyzerRequest):
     client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
