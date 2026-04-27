@@ -37,14 +37,15 @@ def analyze (request: AnalyzeRequest):
         ]
     })
 
-    response = client.invoke_model(
-        modelId = "anthropic.claude-3-haiku-20240307-v1:0",
-        body = body
-    )
-
-    result = json.loads(response["body"].read())
-
-    return {"analysis": result["content"][0]["text"]}
+    try:
+        response = client.invoke_model(
+            modelId="anthropic.claude-3-haiku-20240307-v1:0",
+            body=body
+        )
+        result = json.loads(response["body"].read())
+        return {"analysis": result["content"][0]["text"]}
+    except Exception as e:
+        return {"error": str(e)}
 
 handler = Mangum(app)
 
