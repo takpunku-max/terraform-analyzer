@@ -11,7 +11,7 @@ function App () {
     setLoading(true)
     setAnalysis(null)
     try{
-      const response = await fetch('${API_URL}/analyze', {
+      const response = await fetch(`${API_URL}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({terraform_code: code })
