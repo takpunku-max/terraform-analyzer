@@ -42,16 +42,27 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 
 resource "aws_iam_role_policy" "bedrock_access" {
     name = "bedrock-access"
-    role = aws_iam_role.lambda_exec.id
+  role = aws_iam_role.lambda_exec.id
 
-    policy = jsonencode({
-        Version = "2012-10-17"
-        Statement = [{
-            Effect = "Allow"
-            Action = ["bedrock:InvokeModel"]
-            Resource = "*"
-        }]
-    })
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["bedrock:InvokeModel"]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = [
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:Unsubscribe"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 resource "aws_lambda_function" "backend" {
