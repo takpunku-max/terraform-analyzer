@@ -12,12 +12,12 @@ app.add_middleware(
     allow_headers = ["*"],
     allow_methods = ["*"],
 )
-class AnalyzerRequest(BaseModel):
+class AnalyzeRequest(BaseModel):
     terraform_code:str
 
 
 @app.post("/analyze")
-def analyzer (request: AnalyzerRequest):
+def analyze (request: AnalyzeRequest):
     client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
     prompt = f"""You are a DevOps and cloud security expert. Analyze the following Terraform code and provide:
@@ -27,7 +27,7 @@ def analyzer (request: AnalyzerRequest):
     4. A plain-English summary of what the infrastructure does
 
     Terrafrom Code:
-    {request.terrafrom_code}"""
+    {request.terraform_code}"""
 
     body = json.dumps({
         "anthropic_version": "bedrock-2023-05-31",
@@ -42,7 +42,9 @@ def analyzer (request: AnalyzerRequest):
         body = body
     )
 
-    result = json.loads(response)
+    result = json.loads(response["body"].read())
+
+    return {"analysis": result["content"][0]["text"]}
 
 handler = Mangum(app)
 
