@@ -8,7 +8,8 @@ import json
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://api.analyzer.kjdevops-portfolio.com"],
+    allow_origins=["https://analyzer.kjdevops-portfolio.com",
+    "http://localhost:5173"],
     allow_headers=["*"],
     allow_methods=["*"],
 )
