@@ -54,3 +54,4 @@ def analyze(request: AnalyzeRequest):
 
 handler = Mangum(app)
 
+
