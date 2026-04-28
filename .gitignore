@@ -15,3 +15,5 @@ infra/.terraform.lock.hcl
 # Env files
 .env
 .env.local
+
+terraform-analyzer-deploy_accessKeys1.csv

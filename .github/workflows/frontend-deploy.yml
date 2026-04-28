@@ -1,0 +1,45 @@
+on:
+    push:
+        branches: [main]
+        paths:
+            - 'frontend/**'
+
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        env: 
+            FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                node-version: '24'
+            
+            - name: Install dependencies
+              run: npm ci
+              working-directory: frontend
+
+            - name: Build
+              run: npm run build
+              working-directory: frontend
+              env:
+                VITE_API_URL: ${{ secrets.VITE_API_URL }}
+            
+            - name: Configure AWS crednetials 
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
+                aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+                aws-region: us-east-1
+
+            - name: Sync to S3
+              run: |
+                aws s3 sync frontend/dist s3://terraform-analyzer-frontend --delete
+
+            - name: Invalidate CloudFront
+              run: |
+                aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+
