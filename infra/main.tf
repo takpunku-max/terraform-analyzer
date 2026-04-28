@@ -1,8 +1,3 @@
-variable "acm_certificate_arn" {
-    description = "ARN of the ACM certificate for the custom domain"
-    type        = string
-}
-
 terraform {
     required_providers {
         aws = {
