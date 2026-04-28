@@ -163,4 +163,4 @@ All AWS resources are defined as code in `infra/main.tf`:
 
 **KJ** — Aspiring DevOps Engineer | AWS CCP | ITIL 4 | CompTIA A+
 
-Currently pursuing BSIT at WGU (expected Summer 2026) and working as an IT Student Worker at Texas A&M University System Office.
+Currently pursuing BSIT at WGU (expected December 2026) and working as an IT Student Worker at Texas A&M University System Office.
