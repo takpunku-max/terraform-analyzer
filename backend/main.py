@@ -22,6 +22,8 @@ class AnalyzeRequest(BaseModel):
 
 @app.post("/analyze")
 def analyze(request: AnalyzeRequest):
+    if len(request.terraform_code) > 50_000:
+        raise HTTPException(status_code=400, detail="Input too large")
     prompt = f"""You are a DevOps and cloud security expert. Analyze the following Terraform code and provide:
     1. Security issues and misconfigurations
     2. Cost optimization suggestions

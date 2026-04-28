@@ -1,3 +1,8 @@
+variable "acm_certificate_arn" {
+    description = "ARN of the ACM certificate for the custom domain"
+    type        = string
+}
+
 terraform {
     required_providers {
         aws = {
@@ -50,16 +55,7 @@ resource "aws_iam_role_policy" "bedrock_access" {
       {
         Effect   = "Allow"
         Action   = ["bedrock:InvokeModel"]
-        Resource = "*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = [
-          "aws-marketplace:ViewSubscriptions",
-          "aws-marketplace:Subscribe",
-          "aws-marketplace:Unsubscribe"
-        ]
-        Resource = "*"
+        Resource = "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0"
       }
     ]
   })
@@ -180,3 +176,39 @@ resource "aws_s3_bucket_policy" "frontend" {
     })
 }
 
+data "aws_acm_certificate" "wildcard" {
+  domain   = "*.kjdevops-portfolio.com"
+  statuses = ["ISSUED"]
+}
+
+resource "aws_apigatewayv2_domain_name" "backend" {
+    domain_name = "analyzer.kjdevops-portfolio.com"
+
+    domain_name_configuration {
+        certificate_arn = data.aws_acm_certificate.wildcard.arn
+        endpoint_type = "REGIONAL"
+        security_policy = "TLS_1_2"
+    }
+}
+
+resource "aws_apigatewayv2_api_mapping" "backend" {
+    api_id = aws_apigatewayv2_api.backend.id
+    domain_name = aws_apigatewayv2_domain_name.backend.id
+    stage = aws_apigatewayv2_stage.backend.id
+}
+
+data "aws_route53_zone" "main" {
+    name = "kjdevops-portfolio.com"
+}
+
+resource "aws_route53_record" "analyzer_api" {
+    zone_id = data.aws_route53_zone.main.zone_id
+    name = "analyzer.kjdevops-portfolio.com"
+    type = "A"
+
+    alias {
+        name = aws_apigatewayv2_domain_name.backend.domain_name_configuration[0].target_domain_name
+        zone_id = aws_apigatewayv2_domain_name.backend.domain_name_configuration[0].hosted_zone_id
+        evaluate_target_health = false
+    }
+}

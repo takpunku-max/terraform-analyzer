@@ -11,9 +11,8 @@ infra/.terraform/
 infra/*.tfstate
 infra/*.tfstate.backup
 infra/.terraform.lock.hcl
+terraform.tfvars
 
 # Env files
 .env
 .env.local
-
-terraform-analyzer-deploy_accessKeys1.csv
