@@ -20,19 +20,44 @@ jobs:
           aws-region: us-east-1
 
       - name: Login to ECR
-        run: |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 895112955219.dkr.ecr.us-east-1.amazonaws.com
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: terraform-analyzer-backend
+          IMAGE_TAG: ${{ github.sha }}-${{ github.run_number }}
         run: |
           docker buildx build --platform linux/amd64 --provenance=false \
-            -t 895112955219.dkr.ecr.us-east-1.amazonaws.com/terraform-analyzer-backend:latest \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             --push backend/
 
       - name: Update Lambda
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: terraform-analyzer-backend
+          IMAGE_TAG: ${{ github.sha }}-${{ github.run_number }}
         run: |
           aws lambda update-function-code \
             --function-name terraform-analyzer-backend \
-            --image-uri 895112955219.dkr.ecr.us-east-1.amazonaws.com/terraform-analyzer-backend:latest
+            --image-uri $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-            
+      - name: Verify deployment
+        run: |
+          echo "Waiting for Lambda to finish updating..."
+          aws lambda wait function-updated \
+            --function-name terraform-analyzer-backend
+
+          echo "Checking health endpoint..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            https://analyzer-api.kjdevops-portfolio.com/health)
+
+          if [ "$RESPONSE" = "200" ]; then
+            echo "✓ Health check passed — deployment successful"
+          else
+            echo "✗ Health check failed — got HTTP $RESPONSE"
+            exit 1
+          fi
+
+          
