@@ -18,7 +18,7 @@ function App () {
       })
       const data = await response.json()
       setAnalysis(data.analysis)
-    } catch (err) {
+    } catch {
       setAnalysis('Error connecting to API')
     } finally {
       setLoading(false)
