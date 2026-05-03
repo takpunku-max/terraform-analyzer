@@ -28,7 +28,7 @@ function App () {
   return (
     <main style={{ fontFamily: 'system-ui', padding: '2rem', maxWidth: '800px', margin: '0 auto'}}>
       <h1>Terraform Analyzer</h1>
-      <p>Paste your Terraform code below to get security, cost, and best practice analysis!</p>
+      <p>Paste your Terraform code below to get security, cost, and best practice analysis.</p>
       <textarea
         rows = {15}
         style = {{ width: '100%', fontFamily: 'monospace', fontSize: '14px' }}
