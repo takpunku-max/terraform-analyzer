@@ -10,8 +10,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://analyzer.kjdevops-portfolio.com",
     "http://localhost:5173"],
-    allow_headers=["*"],
-    allow_methods=["*"],
+    allow_headers=["content-type"],
+    allow_methods=["GET", "POST", "OPTIONS"],
 )
 
 client = boto3.client("bedrock-runtime", region_name="us-east-1")
@@ -19,6 +19,11 @@ client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
 class AnalyzeRequest(BaseModel):
     terraform_code: str
+
+
+@app.get("/health")
+def health():
+    return {"status": "0K"}
 
 
 @app.post("/analyze")
@@ -52,6 +57,6 @@ def analyze(request: AnalyzeRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-handler = Mangum(app)
 
+handler = Mangum(app)
 
