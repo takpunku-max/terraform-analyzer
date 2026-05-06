@@ -19,6 +19,27 @@ Paste any Terraform code into the analyzer and get back:
 ---
 
 ## Architecture
+
+```
+Browser
+ └── Route 53 (DNS)
+ └── analyzer.kjdevops-portfolio.com
+     └── CloudFront (CDN + HTTPS)
+         └── S3 (React/Vite static frontend)
+
+Browser (API calls)
+ └── analyzer-api.kjdevops-portfolio.com
+     └── API Gateway (HTTP + throttling)
+         └── Lambda (FastAPI + Mangum + Docker)
+             └── ECR (container image registry)
+             └── AWS Bedrock (Claude Haiku 4.5)
+
+GitHub Actions
+ ├── frontend-deploy.yml → build → S3 sync → CloudFront invalidation
+ ├── backend-deploy.yml  → build image → push to ECR → update Lambda → health check
+ └── lint.yml            → ruff (Python) + ESLint (JS) on push and PR
+```
+
 ---
 
 ## Tech Stack
@@ -39,6 +60,35 @@ Paste any Terraform code into the analyzer and get back:
 ---
 
 ## Project Structure
+
+```
+terraform-analyzer/
+├── frontend/                   # React/Vite app
+│   ├── src/
+│   │   └── App.jsx             # Textarea input + analysis display
+│   └── vite.config.js
+├── backend/                    # FastAPI app
+│   ├── main.py                 # /health + /analyze endpoints + Bedrock call
+│   ├── Dockerfile              # Lambda container image
+│   ├── .dockerignore           # Excludes venv, pycache, .env from image
+│   └── requirements.txt        # Pinned dependencies
+├── infra/                      # Terraform IaC
+│   ├── backend.tf              # Remote state (S3 + DynamoDB lock)
+│   ├── provider.tf             # AWS provider config
+│   ├── main.tf                 # Root module — calls child modules
+│   ├── variables.tf            # Input variables
+│   ├── outputs.tf              # Stack outputs
+│   └── modules/
+│       ├── storage/            # S3 bucket + OAC + public access block
+│       ├── cdn/                # CloudFront + Route53
+│       └── compute/            # Lambda + API Gateway + ECR + IAM + Bedrock
+└── .github/
+    └── workflows/
+        ├── frontend-deploy.yml
+        ├── backend-deploy.yml
+        └── lint.yml
+```
+
 ---
 
 ## Local Development
@@ -115,9 +165,9 @@ Remote state is stored in S3 (`terraform-analyzer-tfstate-kj`) with DynamoDB loc
 
 ## Challenges & Solutions
 
-**Bedrock IAM cross-region routing** — Lambda's Bedrock calls were being routed to us-east-2 by the inference profile but the IAM policy only allowed us-east-1. Fixed by scoping the policy resource ARNs to all regions using wildcards while keeping model specificity.
+**Bedrock IAM cross-region routing** — Lambda's Bedrock calls were being routed to `us-east-2` by the inference profile but the IAM policy only allowed `us-east-1`. Fixed by scoping the policy resource ARNs to all regions using wildcards while keeping model specificity.
 
-**Docker architecture mismatch** — Mac ARM builds rejected by Lambda's linux/amd64 runtime. Fixed with `docker buildx build --platform linux/amd64 --provenance=false` to produce a single-platform image without multi-manifest metadata that Lambda rejects.
+**Docker architecture mismatch** — Mac ARM builds rejected by Lambda's `linux/amd64` runtime. Fixed with `docker buildx build --platform linux/amd64 --provenance=false` to produce a single-platform image without multi-manifest metadata that Lambda rejects.
 
 **Input validation** — Added a 50,000 character limit on Terraform input to prevent Lambda timeouts and runaway Bedrock costs on oversized payloads.
 
